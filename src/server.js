@@ -1,15 +1,15 @@
 import express from 'express';
-import { mapOrder } from '*/utilities/sorts.js';
+import {connectDB} from '*/config/mongodb';
+import {env} from '*/config/env';
 
 const app = express();
 
-const hostname = 'localhost';
-const port = 8000;
+connectDB().catch(console.log);
 
 app.get('/', (req, res) => {
     res.end('<h1>Hello</h1>')
 });
 
-app.listen(port, hostname, () => {
-    console.log(`Server running at ${hostname}:${port}`);
+app.listen(env.PORT, env.HOST , () => {
+    console.log(`Server running at ${env.HOST}:${env.PORT}`);
 })
