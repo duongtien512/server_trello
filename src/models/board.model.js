@@ -1,5 +1,9 @@
 import Joi from 'joi';
+import { ObjectId } from 'mongodb';
 import {getDB} from '*/config/mongodb';
+import { ColumnModel } from './column.model';
+import { CardModel } from './card.model'
+ 
 // Define Board collection
 const boardCollectionName = 'boards';
 
@@ -15,6 +19,15 @@ const validateSchema = async(data) => {
     return await boardCollectionSchema.validateAsync(data, { abortEarly: false });
 };
 
+const findById = async (id) => {
+    try {
+        const result = await getDB().collection(boardCollectionName).findOne({ _id: ObjectId(id) });
+        return result;
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
 const createNew = async(data) => {
     try {
         const value = await validateSchema(data);
@@ -25,4 +38,46 @@ const createNew = async(data) => {
     }
 };
 
-export const BoardModel = {createNew};
+const pushColumnOrder = async (boardId, columnId) => {
+    try {
+        const result = await getDB().collection(boardCollectionName).findOneAndUpdate(
+            { _id: ObjectId(boardId) },
+            { $push: { columnOrder: columnId } },
+            { returnOriginal: false }
+        );
+        return result.value
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
+const getFullBoard = async(boardId) => {
+    try {
+        const result = await getDB().collection(boardCollectionName).aggregate([
+            { $match: { _id: ObjectId(boardId) }},
+            { $lookup: {
+                    from: ColumnModel.columnCollectionName,    // collection name
+                    localField: '_id',
+                    foreignField: 'boardId',
+                    as: 'columns'
+            } },
+            { $lookup: {
+                    from: CardModel.cardCollectionName,    // collection name
+                    localField: '_id',
+                    foreignField: 'boardId',
+                    as: 'cards'
+            } }
+        ]).toArray();
+
+        return result[0] || {};
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
+export const BoardModel = {
+    findById,
+    createNew,
+    pushColumnOrder,
+    getFullBoard
+};
