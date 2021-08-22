@@ -14,6 +14,23 @@ const createNew = async(data) => {
     }
 };
 
+const update = async(id, data) => {
+    try {
+        const updateData = {
+            ...data,
+            updatedAt: Date.now()
+        };
+        if(updateData._id) delete updateData._id;
+        const result = await CardModel.update(id, updateData);
+        const findById = await CardModel.findById(id);
+        
+        return findById;
+    } catch (error) {
+        throw new Error(error);
+    }
+};
+
 export const CardService = {
-    createNew
+    createNew,
+    update
 }
